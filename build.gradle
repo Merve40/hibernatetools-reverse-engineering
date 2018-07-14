@@ -1,0 +1,50 @@
+apply plugin: 'java'
+
+sourceCompatibility = '1.8'
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+
+if (!hasProperty('mainClass')) {
+    ext.mainClass = 'hibernate.reverseengineering.Main'
+}
+
+repositories {
+    mavenCentral()
+    jcenter()
+}
+
+dependencies {
+    compile group: 'org.hibernate', name: 'hibernate-tools', version: '5.3.1.Final'
+    compile group: 'org.hibernate', name: 'hibernate-core', version: '5.3.1.Final'
+    
+    compile group: 'mysql', name: 'mysql-connector-java', version: '5.1.34'
+    
+    testCompile group: 'junit', name: 'junit', version: '4.10'
+}
+
+task hibernate{
+    
+    doLast{
+        ant {
+            def base = "$projectDir/src/main/java"
+            
+            taskdef(name: 'hibernatetool', 
+                classname: 'org.hibernate.tool.ant.HibernateToolTask',
+                classpath: configurations.compile.asPath )
+                     
+            hibernatetool( destdir : base) { 
+                
+                classpath{
+                    path(location:"${buildDir}/classes/java/main/")
+                }
+                
+                jdbcconfiguration(
+                    propertyfile:"src/main/resources/hibernate-db.properties", 
+                    reversestrategy:"hibernate.reverseengineering.HibernateReverseEngineeringStrategy",
+                    packagename: "hibernate.reverseengineering.generated"
+                ) 
+             
+                hbm2java(ejb3:true)
+            } 
+        }
+    }
+}
